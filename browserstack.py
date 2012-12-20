@@ -1,10 +1,6 @@
 import requests
 import simplejson
 
-uname = "hemendra26@gmail.com"
-passwd = "browserstack"
-
-
 class ImproperlyConfiguredException(Exception):
     pass
 
@@ -155,33 +151,4 @@ if __name__ == '__main__':
     print b1.delete_active_workers()
     print b1.get_active_workers()
     print b1.get_workers()
-
-
-
-        
-# blist = get_browser()
-# print blist
-# print 
-# print "Creating worker"
-# print 
-
-# kw = {}
-# kw['os']="mac"
-# kw.update(blist["mac"][0])
-# kw['url'] = 'http://www.browserstack.com'
-
-# w = create_worker(**kw)
-# id = w['id']
-# print w
-
-# wlist = get_workers()
-# id = wlist[0]['id']
-# print get_worker_status(id)
-
-# print delete_worker(id)
-
-# print get_workers()
-
-# print get_worker_status(id)
-
 
