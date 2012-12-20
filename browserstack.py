@@ -142,7 +142,7 @@ if __name__ == '__main__':
     
     b1 = BrowserStack(auth=('username','passwd'))
     print b1.get_browser()
-    print b1.create_worker(b1.get_browser()[5], url="http://www.bcradio.in")
+    print b1.create_worker(b1.get_browser()[5], url="http://www.google.com")
     print b1.get_active_workers()
     print b1.create_worker(b1.get_browser()[15], url="http://www.browserstack.com")
     print b1.get_active_workers()
