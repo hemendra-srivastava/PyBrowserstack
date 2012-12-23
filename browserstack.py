@@ -1,9 +1,7 @@
 import requests
 import simplejson
 
-class ImproperlyConfiguredException(Exception):
-    pass
-
+class ImproperlyConfiguredException(Exception): pass
 class BrowserStackException(Exception): pass
 class AuthException(BrowserStackException): pass
 class ForbiddenException(BrowserStackException): pass
@@ -24,9 +22,10 @@ class BrowserStackError(BrowserStackException):
         return self.message + repr(self.errors)
 
 class BrowserObject(object):
+    """ Serves the purpose of validation for browser payload """
 
     def __init__(self, **kwargs):
-        kw = ['os', 'browser', 'device', 'version', 'timeout']
+        """ Takes in OS, browser or device, version, timeout(optional) as keyword arguments """
         self.payload = {}
         if kwargs.get('os'):
             self.payload['os'] = kwargs.get('os')
@@ -56,12 +55,19 @@ class BrowserObject(object):
         return "; ".join(["%s : %s" %(k,v) for k,v in self.payload.items()])
 
     def get_payload(self):
+        """ Get the payload required for POST request for creating worker """
         return self.payload
 
     
 class BrowserStack(object):
+    """ API Class for browserstack API Calls """
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        """ 
+        Initialisation for api 
+        Kwargs must contain auth tuple of ("username", "password")
+        """
+        
         self.VERSION_NO = kwargs.get('VERSION_NO') or 2
         self.url = "http://api.browserstack.com/"
         self.browser_list = []
@@ -73,7 +79,9 @@ class BrowserStack(object):
         else:
             raise ImproperlyConfiguredException("Please define an auth=('username', 'passwd') tuple in object constructor")
 
-    def _process_request(self, req):
+    def _process_response(self, req):
+        """ This function processes response from an API call and returns the corresponding response based on the request status_code """
+        
         if req.status_code == 401:
             raise AuthException("Authentication Failure")
         elif req.status_code == 403:
@@ -86,15 +94,19 @@ class BrowserStack(object):
             raise HttpException(req.status_code)
     
     def get_url(self):
+        """ gets api url, appends version number and returns complete url for making api call """
         if type(self.VERSION_NO) == int:
             return self.url+"%s" %(self.VERSION_NO)
         else:
             raise ImproperlyConfiguredException("Version no must be int")
 
-    def get_browser(self):
-        if not self.browser_list:
+    def get_browser(self, reset=False):
+        """ 
+        Gets list of available browsers creates corresponding browserobjects
+        """
+        if (not self.browser_list) or reset:
             r = requests.get(self.get_url() + "/browsers", auth=self.auth)
-            blist = self._process_request(r)
+            blist = self._process_response(r)
             for k, v in blist.items():
                 for ele in v:
                     di = ele
@@ -105,20 +117,31 @@ class BrowserStack(object):
         return self.browser_list
     
     def create_worker(self, obj1, url):
+        """
+        Creates worker and returns id. 
+        Takes Browser Object and URL to be tested as arguments for the function.
+        """
         if obj1 in self.browser_list:
             payload = obj1.payload
         else:
             raise BrowserStackException("Invalid Browser Object")
         payload.update({'url':url})
         r = requests.post(self.get_url() + "/worker", auth=self.auth, params=payload)
-        bid = self._process_request(r)
+        bid = self._process_response(r)
         self.wdict.update({bid['id']:obj1})
         return bid
 
     def get_active_workers(self):
+        """
+        Returns dict of active workers from this session. (locally cached)
+        Dict contains {id:object}
+        """
         return self.wdict
-
+    
     def delete_active_workers(self):
+        """
+        Delete all active workers across all sessions. 
+        """
         wdict = dict([(ele['id'],ele['os']) for ele in self.get_workers()])
         aworkers = self.get_active_workers().keys()
         aworkers += [ele for ele in wdict.keys() if ele not in aworkers]
@@ -126,16 +149,25 @@ class BrowserStack(object):
         return [self.delete_worker(ele) for ele in aworkers]
 
     def delete_worker(self, id):
+        """
+        Takes id as input and deletes corresponding worker
+        """
         r = requests.delete(self.get_url() + "/worker/%s" %(id), auth=self.auth)
-        return self._process_request(r)
+        return self._process_response(r)
         
     def get_worker_status(self, id):
+        """
+        Gets worker status given a worker id
+        """
         r = requests.get(self.get_url() + "/worker/%s" %(id), auth=self.auth)
-        return self._process_request(r)
+        return self._process_response(r)
 
     def get_workers(self):
+        """
+        Gets all active workers from API call.
+        """
         r = requests.get(self.get_url()+ "/workers", auth=self.auth)
-        return self._process_request(r)
+        return self._process_response(r)
 
 
 if __name__ == '__main__':

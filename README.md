@@ -17,4 +17,5 @@ Usage:
     b1.delete_active_workers() # Deletes all active workers including those created in previous sessions
     
     
-    
+    # Given a browserobject bobj
+    bobj.get_payload() # Prints the attributes for the browser object that will be passed to the create_worker function
